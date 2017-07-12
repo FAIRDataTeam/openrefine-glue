@@ -19,4 +19,4 @@ RUN rm -rf /opt/openrefine/tools
 
 # run
 EXPOSE 3333
-ENTRYPOINT ["/opt/openrefine/refine", "run", "-i", "0.0.0.0", "-x", "refine.headless=true"]
+ENTRYPOINT ["/opt/openrefine/refine", "-i", "0.0.0.0", "-x", "refine.headless=true"]
