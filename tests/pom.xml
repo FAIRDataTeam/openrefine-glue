@@ -12,15 +12,17 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <spock.version>1.1-groovy-2.4</spock.version>
         <geb.version>1.1.1</geb.version>
-        <htmlunit.version>2.27</htmlunit.version>
+        <phantomjs.version>1.4.3</phantomjs.version>
         <groovy.version>2.4.12</groovy.version>
         <gmavenplus.version>1.5</gmavenplus.version>
-        <surefire.version>2.20</surefire.version>
+        <failsafe.version>2.20</failsafe.version>
+        <docker-plugin.version>0.21.0</docker-plugin.version>
     </properties>
 
     <dependencies>
@@ -37,9 +39,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>htmlunit-driver</artifactId>
-            <version>${htmlunit.version}</version>
+            <groupId>com.codeborne</groupId>
+            <artifactId>phantomjsdriver</artifactId>
+            <version>${phantomjs.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -52,18 +54,8 @@
 
     <build>
         <testSourceDirectory>src/test/groovy</testSourceDirectory>
+        
         <plugins>
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire.version}</version>
-                <configuration>
-                    <printSummary>false</printSummary>
-                    <failIfNoTests>true</failIfNoTests>
-                    <includes>
-                        <include>**/*Spec.*</include>
-                    </includes>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.codehaus.gmavenplus</groupId>
                 <artifactId>gmavenplus-plugin</artifactId>
@@ -72,6 +64,78 @@
                     <execution>
                         <goals>
                             <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>${failsafe.version}</version>
+                <configuration>
+                    <printSummary>false</printSummary>
+                    <failIfNoTests>true</failIfNoTests>
+                    <includes>
+                        <include>**/*Spec.*</include>
+                    </includes>
+                    <systemPropertyVariables>
+                        <geb.build.reportsDir>${project.build.directory}/test-reports/geb</geb.build.reportsDir>
+                        <geb.build.baseUrl>http://${docker.host.address}:9999</geb.build.baseUrl>
+                    </systemPropertyVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>${docker-plugin.version}</version>
+                <configuration>
+                    <!-- prevent the default src/main/docker path -->
+                    <sourceDirectory>.</sourceDirectory>
+                    <images>
+                        <image>
+                            <name>dtlfair/openrefine</name>
+                            <build>
+                                <dockerFileDir>..</dockerFileDir>
+                            </build>
+                            <run>
+                                <wait>
+                                    <log>Running in headless mode</log>
+                                    <time>900000</time>
+                                </wait>
+                                <ports>
+                                    <port>9999:3333</port>
+                                </ports>
+                            </run>
+                        </image>
+                    </images>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>docker-build</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>docker-start</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>start</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>docker-stop</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>stop</goal>
                         </goals>
                     </execution>
                 </executions>
