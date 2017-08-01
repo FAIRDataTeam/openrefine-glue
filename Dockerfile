@@ -2,7 +2,8 @@ FROM openjdk:8-alpine
 
 # build and cleanup
 COPY setup.sh /opt/setup.sh
-RUN chmod +x /opt/setup.sh && /opt/setup.sh
+RUN chmod +x /opt/setup.sh
+RUN /opt/setup.sh
 
 # run
 WORKDIR /opt/openrefine
