@@ -1,0 +1,11 @@
+sudo: required
+language: java
+jdk:
+  - oraclejdk8
+services:
+  - docker
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get -qq install phantomjs
+before_script: cd tests
+script: mvn verify
